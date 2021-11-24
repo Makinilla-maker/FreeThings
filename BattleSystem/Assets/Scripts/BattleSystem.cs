@@ -9,20 +9,22 @@ public class BattleSystem : MonoBehaviour
     [SerializeField] private Transform nicole;
     private CharacterBattle allyCharacterBattle;
     private CharacterBattle enemyCharacterBattle;
+    public List<CharacterBattle> list;
     private CharacterBattle activeCharacterBattle;
-    private State state;
-    private enum State {
+    private State state;    private enum State {
         WaitingForPlayer,
         Busy,
     }
+    bool buttonPressedAttack;
+    bool buttonPressedDefense;
     void Start()
     {
         allyCharacterBattle = SpawnCharacter(true);
-        enemyCharacterBattle = SpawnCharacter(false);    
-
+        enemyCharacterBattle = SpawnCharacter(false);
         SetActiveCharacterBattle(allyCharacterBattle);
         state = State.WaitingForPlayer; 
-        
+        buttonPressedAttack = false;
+        buttonPressedDefense = false;
     }
 
     // Update is called once per frame
@@ -30,16 +32,59 @@ public class BattleSystem : MonoBehaviour
     {
         if(state == State.WaitingForPlayer)
         {
-            if(Input.GetKeyDown(KeyCode.Space))
+            if(buttonPressedAttack)
             {
                 state = State.Busy;
                 allyCharacterBattle.Attack(enemyCharacterBattle, () => {
                     ChooseNextCharacter();
                 });
+                buttonPressedAttack = false;
+                buttonPressedDefense = false;
+                Debug.Log(allyCharacterBattle.health);
+                Debug.Log(enemyCharacterBattle.health);
             }
+            if(buttonPressedDefense)
+            {
+                state = State.Busy;
+                allyCharacterBattle.Defense( () =>{
+                    ChooseNextCharacter();
+                });
+                buttonPressedAttack = false;
+                buttonPressedDefense = false;
+                Debug.Log(allyCharacterBattle.health);
+                Debug.Log(enemyCharacterBattle.health);
+            }
+            
         }
         
     }
+    public void ButtonPressed(string type)
+    {
+        if(type == "attack")
+        {
+            if(buttonPressedAttack == true)
+            {
+                buttonPressedAttack = true;
+            }
+            else
+            {
+                buttonPressedAttack = true;
+            }
+        }
+        else
+        {
+            if(buttonPressedDefense == true)
+            {
+                buttonPressedDefense = true;
+            }
+            else
+            {
+                buttonPressedDefense = true;
+            }            
+        }
+        
+    }
+    
     private CharacterBattle SpawnCharacter(bool ally)
     {
         Vector3 posn;
@@ -67,9 +112,18 @@ public class BattleSystem : MonoBehaviour
         {
             SetActiveCharacterBattle(enemyCharacterBattle);
             state = State.Busy;
-            enemyCharacterBattle.Attack(allyCharacterBattle, () => {
-                    ChooseNextCharacter();
+            if(enemyCharacterBattle.health > 35)
+            {
+                enemyCharacterBattle.Attack(allyCharacterBattle, () => {
+                        ChooseNextCharacter();
                 });
+            }
+            else
+            {
+                enemyCharacterBattle.Defense(() => {
+                        ChooseNextCharacter();
+                });
+            }
         }
         else
         {

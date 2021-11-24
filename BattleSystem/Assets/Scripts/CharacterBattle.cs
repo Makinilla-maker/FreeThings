@@ -11,20 +11,22 @@ public class CharacterBattle : MonoBehaviour
     private State state;
     private Vector3 sliderTargetPosition;
     Action onSlideComplete;
-    float health;
+    [SerializeField] public float health;
     public int healthMax;
     public float damage;
-    public Transform healthBar;
+    public float healAmount;
     private enum State
     {
         Idel,
         Sliding,
         Busy,
     }
+    float sliderSpeed;
     void Start()
     {
         state= State.Idel;
         health = healthMax;
+        sliderSpeed = 7f;
     }
 
 
@@ -37,7 +39,6 @@ public class CharacterBattle : MonoBehaviour
             case State.Busy:
                 break;
             case State.Sliding:
-                float sliderSpeed = 7f;
                 transform.position += ((sliderTargetPosition ) - transform.position)* sliderSpeed * Time.deltaTime;
                 
                 float reachedDistance = 1f;
@@ -57,14 +58,10 @@ public class CharacterBattle : MonoBehaviour
         {
             Vector3 sliderTargetPosition = targetCharacterBattle.transform.position + (transform.position - targetCharacterBattle.transform.position).normalized * 10f;
             Vector3 startingPosition = transform.position;
-            Debug.Log("attacked");
-            Debug.Log(targetCharacterBattle.transform.position);
+            sliderSpeed = 7f;
             SlideToPosition(targetCharacterBattle.transform.position,() =>{
                 state = State.Busy;
-                targetCharacterBattle.Damage(damage);
-                targetCharacterBattle.healthBar.localScale = new Vector3(targetCharacterBattle.GetHealthPercent(),0,0);
-                Debug.Log(targetCharacterBattle.health/targetCharacterBattle.healthMax);
-                Debug.Log(targetCharacterBattle.health);
+                targetCharacterBattle.Damage();
             SlideToPosition(startingPosition,()=>{
                     state = State.Idel;
                     onAttackComplete();
@@ -74,10 +71,27 @@ public class CharacterBattle : MonoBehaviour
         //state = State.Busy;
         //SlideToPosition(startingPosition, ()=>{});
     }
+    public void Defense(Action onDefenceComplete)
+    {
+        if(health > 0)
+        {
+            Vector3 startingPosition = transform.position;
+            Debug.Log("healed");
+            sliderSpeed = 3f;
+            SlideToPosition(transform.position + new Vector3(0,3,0),() =>{
+                state = State.Busy;
+                Heal();
+            SlideToPosition(startingPosition,()=>{
+                    state = State.Idel;
+                    onDefenceComplete();
+                });
+            });
+        }
+
+    }
     private void SlideToPosition(Vector3 slidePosition, Action onSlideComplete)
     {
         this.sliderTargetPosition = slidePosition;
-        Debug.Log(this.sliderTargetPosition);
         this.onSlideComplete = onSlideComplete;
         state = State.Sliding;
     }
@@ -85,12 +99,12 @@ public class CharacterBattle : MonoBehaviour
     {
         return health/healthMax;
     }
-    public void Damage(float damageAmount)
+    public void Damage()
     {
-        health -= damageAmount;
+        health -= damage;
         if(health < 0)  health = 0;
     }
-    public void Heal(int healAmount)
+    public void Heal()
     {
         health += healAmount;
         if(health > healthMax) health = healthMax; 
